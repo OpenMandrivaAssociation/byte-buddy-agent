@@ -203,7 +203,12 @@ EOF
 "$JAVA_HOME/bin/javac" --release 8 -encoding UTF-8 \
 	-cp build/byte-buddy-agent.jar \
 	-d build build/Probe.java
-"$JAVA_HOME/bin/java" --enable-native-access=ALL-UNNAMED \
+# install() spawns a helper JVM. ABF isolates /proc in a pid namespace,
+# so that helper fails with "Could not self-attach". Loading the agent
+# at startup still checks Premain-Class and retransformation; install()
+# returns that instrumentation instead of attaching again.
+"$JAVA_HOME/bin/java" -javaagent:build/byte-buddy-agent.jar \
+	--enable-native-access=ALL-UNNAMED \
 	-cp "build:build/byte-buddy-agent.jar" \
 	Probe > build/probe.txt
 cat build/probe.txt
